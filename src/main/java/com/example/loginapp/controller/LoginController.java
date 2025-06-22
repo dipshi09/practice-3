@@ -18,37 +18,41 @@ public class LoginController {
     @GetMapping("/")
     public String showLoginForm(Model model) {
         model.addAttribute("user", new User());
-        return "login"; // login.html
+        return "login";
     }
 
-    // Handle login form submission
+    // Handle login form submit
     @PostMapping("/login")
-    public String login(@ModelAttribute User user, Model model) {
-        try {
-            User existing = userRepository.findByUsernameAndPassword(user.getUsername(), user.getPassword());
-            if (existing != null) {
-                model.addAttribute("message", "Welcome, " + existing.getUsername() + "!");
-                return "login-success";  // login-success.html
-            } else {
-                model.addAttribute("message", "Invalid credentials. Please try again.");
-                return "error"; // error.html for login failure
-            }
-        } catch (Exception ex) {
-            model.addAttribute("message", "Unexpected error: " + ex.getMessage());
-            return "error"; // fallback error.html
+    public String login(@ModelAttribute User user, Model model, RedirectAttributes redirectAttributes) {
+        User existing = userRepository.findByUsernameAndPassword(user.getUsername(), user.getPassword());
+        if (existing != null) {
+            model.addAttribute("message", "Login successful!");
+            return "login-success";
+        } else {
+            model.addAttribute("error", "Invalid credentials");
+            return "login";
         }
     }
 
-    // Optional: redirect target for successful login (if using redirect)
-    @GetMapping("/login-success")
-    public String showSuccessPage() {
-        return "login-success";
+    // Show register form
+    @GetMapping("/register")
+    public String showRegisterForm(Model model) {
+        model.addAttribute("user", new User());
+        return "register";
     }
 
-    // Optional: register page if needed
-    @GetMapping("/register")
-    public String showRegisterPage() {
-        return "register";
+    // Handle register form submit
+    @PostMapping("/register")
+    public String register(@ModelAttribute User user, Model model) {
+        if (userRepository.findById(user.getUsername()).isPresent()) {
+            model.addAttribute("error", "Username already exists");
+            return "register";
+        }
+
+        userRepository.save(user);
+        model.addAttribute("message", "Registration successful. Please log in.");
+        model.addAttribute("user", new User());  // Clear form
+        return "login";
     }
 }
 
